@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Pipeline App - Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #0078D4;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        .navbar-brand {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 2px solid var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .metric-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .nav-tabs .nav-link {
+            border: none;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        .kanban-column {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            min-height: 500px;
+        }
+        
+        .kanban-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: move;
+            transition: all 0.2s;
+        }
+        
+        .kanban-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .deal-priority {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .priority-critical { background-color: #f8d7da; color: #721c24; }
+        .priority-high { background-color: #fff3cd; color: #856404; }
+        .priority-medium { background-color: #d1ecf1; color: #0c5460; }
+        .priority-low { background-color: #d4edda; color: #155724; }
+        
+        .stage-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            min-width: 300px;
+        }
+        
+        .view-content {
+            display: none;
+        }
+        
+        #dashboardView {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-graph-up"></i> Sales Pipeline
+            </a>
+            
+            <div class="d-flex align-items-center">
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                        <span class="user-avatar me-2" id="userInitials">JD</span>
+                        <span id="userName">Joost van Doorn</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
+                        <li><a class="dropdown-item" href="#" id="userSettings"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-2">
+                <div class="card">
+                    <div class="card-body">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="#" data-view="dashboard">
+                                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-view="kanban">
+                                    <i class="bi bi-kanban me-2"></i> Kanban Board
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-view="list">
+                                    <i class="bi bi-list-ul me-2"></i> Deal List
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-view="reports">
+                                    <i class="bi bi-bar-chart me-2"></i> Reports
+                                </a>
+                            </li>
+                            <li class="nav-item mt-3">
+                                <a class="nav-link" href="#" id="sidebarNewDeal">
+                                    <i class="bi bi-plus-circle me-2"></i> New Deal
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" id="sidebarSettings">
+                                    <i class="bi bi-gear me-2"></i> Settings
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Pipeline Selector -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <i class="bi bi-funnel me-2"></i> Pipelines
+                    </div>
+                    <div class="card-body">
+                        <select class="form-select" id="pipelineFilter">
+                            <option value="">All Pipelines</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="col-lg-10">
+                <!-- Dashboard View -->
+                <div id="dashboardView" class="view-content">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h2 class="h4 mb-3">Sales Dashboard</h2>
+                        </div>
+                    </div>
+                    
+                    <!-- Metrics Row -->
+                    <div class="row mb-4">
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card metric-card">
+                                <div class="metric-value" id="totalValue">€0</div>
+                                <div class="metric-label">Pipeline Value</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card metric-card">
+                                <div class="metric-value" id="activeDeals">0</div>
+                                <div class="metric-label">Active Deals</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card metric-card">
+                                <div class="metric-value" id="conversionRate">0%</div>
+                                <div class="metric-label">Conversion Rate</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card metric-card">
+                                <div class="metric-value" id="avgDealSize">€0</div>
+                                <div class="metric-label">Avg Deal Size</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts and Activities -->
+                    <div class="row">
+                        <div class="col-lg-8 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span>Pipeline Stages</span>
+                                    <select class="form-select form-select-sm w-auto" id="pipelineSelect">
+                                        <option>B2B Consulting Pipeline</option>
+                                    </select>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="stageChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    Recent Activity
+                                </div>
+                                <div class="card-body p-0">
+                                    <div id="activityList" class="list-group list-group-flush">
+                                        <!-- Activities will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Team Performance -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    Team Performance
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover" id="teamPerformanceTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Team Member</th>
+                                                    <th>Active Deals</th>
+                                                    <th>Won Deals</th>
+                                                    <th>Total Value</th>
+                                                    <th>Conversion Rate</th>
+                                                    <th>Avg Deal Size</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Team data will be loaded here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Kanban Board View (hidden by default) -->
+                <div id="kanbanView" class="view-content" style="display: none;">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h2 class="h4 mb-3">Kanban Board</h2>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <button id="addStageBtn" class="btn btn-primary btn-sm me-2">
+                                        <i class="bi bi-plus"></i> Add Stage
+                                    </button>
+                                    <button id="filterKanbanBtn" class="btn btn-outline-secondary btn-sm">
+                                        <i class="bi bi-filter"></i> Filter
+                                    </button>
+                                </div>
+                                <div>
+                                    <span class="text-muted me-3">Drag deals between stages</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row" id="kanbanContainer">
+                        <!-- Kanban columns will be loaded here -->
+                    </div>
+                </div>
+                
+                <!-- List View (hidden by default) -->
+                <div id="listView" class="view-content" style="display: none;">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h2 class="h4 mb-3">Deal List</h2>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <button class="btn btn-primary btn-sm me-2" id="newDealButton">
+                                        <i class="bi bi-plus"></i> New Deal
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm me-2" id="exportDealsButton">
+                                        <i class="bi bi-download"></i> Export
+                                    </button>
+                                </div>
+                                <div class="d-flex">
+                                    <input type="text" class="form-control form-control-sm me-2" placeholder="Search deals..." id="dealSearch">
+                                    <select class="form-select form-select-sm w-auto" id="dealFilter">
+                                        <option>All Status</option>
+                                        <option>Active</option>
+                                        <option>Won</option>
+                                        <option>Lost</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover mb-0" id="dealTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Deal Name</th>
+                                                    <th>Company</th>
+                                                    <th>Stage</th>
+                                                    <th>Value</th>
+                                                    <th>Probability</th>
+                                                    <th>Close Date</th>
+                                                    <th>Priority</th>
+                                                    <th>Assigned To</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Deal data will be loaded here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Reports View (hidden by default) -->
+                <div id="reportsView" class="view-content" style="display: none;">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h2 class="h4 mb-3">Reports & Analytics</h2>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <button class="btn btn-outline-primary btn-sm me-2 time-period-btn" data-period="week">
+                                        <i class="bi bi-calendar-week"></i> This Week
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm me-2 time-period-btn" data-period="month">
+                                        <i class="bi bi-calendar-month"></i> This Month
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm time-period-btn" data-period="quarter">
+                                        <i class="bi bi-calendar"></i> This Quarter
+                                    </button>
+                                </div>
+                                <div>
+                                    <button class="btn btn-primary btn-sm" id="exportReportButton">
+                                        <i class="bi bi-download"></i> Export Report
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    Revenue Forecast
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="revenueChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    Priority Distribution
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="priorityChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    Conversion Funnel
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="funnelChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Deal Modal -->
+    <div class="modal fade" id="editDealModal" tabindex="-1" aria-labelledby="editDealModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editDealModalLabel">Edit Deal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editDealForm">
+                        <input type="hidden" id="editDealId">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editDealName" class="form-label">Deal Name *</label>
+                                <input type="text" class="form-control" id="editDealName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editDealCompany" class="form-label">Company</label>
+                                <input type="text" class="form-control" id="editDealCompany">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editDealPipeline" class="form-label">Pipeline</label>
+                                <select class="form-select" id="editDealPipeline">
+                                    <!-- Will be populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editDealSource" class="form-label">Source</label>
+                                <input type="text" class="form-control" id="editDealSource" placeholder="e.g., Referral, Website, Cold Call">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editDealValue" class="form-label">Value (€) *</label>
+                                <input type="number" class="form-control" id="editDealValue" min="0" step="1000" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editDealProbability" class="form-label">Probability (%)</label>
+                                <input type="number" class="form-control" id="editDealProbability" min="0" max="100" step="5" value="50">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editDealPriority" class="form-label">Priority</label>
+                                <select class="form-select" id="editDealPriority">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editDealCloseDate" class="form-label">Close Date</label>
+                                <input type="date" class="form-control" id="editDealCloseDate">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editDealStage" class="form-label">Stage</label>
+                                <select class="form-select" id="editDealStage">
+                                    <!-- Will be populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editDealAssignedTo" class="form-label">Assigned To</label>
+                                <input type="text" class="form-control" id="editDealAssignedTo">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editDealDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="editDealDescription" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editDealNotes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="editDealNotes" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveDealChanges">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Deal Modal -->
+    <div class="modal fade" id="newDealModal" tabindex="-1" aria-labelledby="newDealModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newDealModalLabel">Create New Deal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newDealForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="newDealName" class="form-label">Deal Name *</label>
+                                <input type="text" class="form-control" id="newDealName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="newDealCompany" class="form-label">Company</label>
+                                <input type="text" class="form-control" id="newDealCompany">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="newDealPipeline" class="form-label">Pipeline</label>
+                                <select class="form-select" id="newDealPipeline">
+                                    <!-- Will be populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="newDealSource" class="form-label">Source</label>
+                                <input type="text" class="form-control" id="newDealSource" placeholder="e.g., Referral, Website, Cold Call">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="newDealValue" class="form-label">Value (€) *</label>
+                                <input type="number" class="form-control" id="newDealValue" min="0" step="1000" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="newDealProbability" class="form-label">Probability (%)</label>
+                                <input type="number" class="form-control" id="newDealProbability" min="0" max="100" step="5" value="50">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="newDealPriority" class="form-label">Priority</label>
+                                <select class="form-select" id="newDealPriority">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="newDealCloseDate" class="form-label">Close Date</label>
+                                <input type="date" class="form-control" id="newDealCloseDate">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="newDealStage" class="form-label">Stage</label>
+                                <select class="form-select" id="newDealStage">
+                                    <!-- Will be populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="newDealAssignedTo" class="form-label">Assigned To</label>
+                                <input type="text" class="form-control" id="newDealAssignedTo" value="user_1">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newDealDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="newDealDescription" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newDealNotes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="newDealNotes" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="createNewDeal">Create Deal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs mb-4" id="settingsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="user-tab" data-bs-toggle="tab" data-bs-target="#user-tab-pane" type="button" role="tab" aria-controls="user-tab-pane" aria-selected="true">User Profile</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="pipeline-tab" data-bs-toggle="tab" data-bs-target="#pipeline-tab-pane" type="button" role="tab" aria-controls="pipeline-tab-pane" aria-selected="false">Pipeline</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="notifications-tab" data-bs-toggle="tab" data-bs-target="#notifications-tab-pane" type="button" role="tab" aria-controls="notifications-tab-pane" aria-selected="false">Notifications</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="settingsTabContent">
+                        <!-- User Profile Tab -->
+                        <div class="tab-pane fade show active" id="user-tab-pane" role="tabpanel" aria-labelledby="user-tab" tabindex="0">
+                            <form id="userProfileForm">
+                                <div class="mb-3">
+                                    <label for="userNameInput" class="form-label">Display Name</label>
+                                    <input type="text" class="form-control" id="userNameInput" value="Joost van Doorn">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="userEmailInput" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="userEmailInput" value="j.van.doorn@mpindustries.tech">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="userRoleInput" class="form-label">Role</label>
+                                    <select class="form-select" id="userRoleInput">
+                                        <option value="admin" selected>Admin</option>
+                                        <option value="manager">Manager</option>
+                                        <option value="sales">Sales Representative</option>
+                                        <option value="viewer">Viewer</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="userTimezone" class="form-label">Timezone</label>
+                                    <select class="form-select" id="userTimezone">
+                                        <option value="Europe/Lisbon" selected>Europe/Lisbon (Portugal)</option>
+                                        <option value="Europe/Riga">Europe/Riga (Latvia)</option>
+                                        <option value="Europe/Amsterdam">Europe/Amsterdam (Netherlands)</option>
+                                        <option value="UTC">UTC</option>
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Pipeline Tab -->
+                        <div class="tab-pane fade" id="pipeline-tab-pane" role="tabpanel" aria-labelledby="pipeline-tab" tabindex="0">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Pipeline settings allow you to customize stages, colors, and workflow rules.
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Current Pipeline Stages</label>
+                                <div id="pipelineStagesList" class="border rounded p-3">
+                                    <!-- Stages will be loaded dynamically -->
+                                    <div class="text-center text-muted">
+                                        <i class="bi bi-hourglass-split"></i> Loading stages...
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <button class="btn btn-outline-primary btn-sm" id="addStageBtn">
+                                    <i class="bi bi-plus"></i> Add Stage
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" id="reorderStagesBtn">
+                                    <i class="bi bi-arrows-move"></i> Reorder Stages
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Notifications Tab -->
+                        <div class="tab-pane fade" id="notifications-tab-pane" role="tabpanel" aria-labelledby="notifications-tab" tabindex="0">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                                <label class="form-check-label" for="emailNotifications">
+                                    Email notifications
+                                </label>
+                                <div class="form-text">Receive email alerts for deal updates</div>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="browserNotifications" checked>
+                                <label class="form-check-label" for="browserNotifications">
+                                    Browser notifications
+                                </label>
+                                <div class="form-text">Show desktop notifications for real-time updates</div>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="dealAssignedNotifications" checked>
+                                <label class="form-check-label" for="dealAssignedNotifications">
+                                    Deal assignment notifications
+                                </label>
+                                <div class="form-text">Notify when deals are assigned to you</div>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="stageChangeNotifications" checked>
+                                <label class="form-check-label" for="stageChangeNotifications">
+                                    Stage change notifications
+                                </label>
+                                <div class="form-text">Notify when deals move between stages</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="notificationFrequency" class="form-label">Notification Frequency</label>
+                                <select class="form-select" id="notificationFrequency">
+                                    <option value="immediate" selected>Immediate</option>
+                                    <option value="hourly">Hourly digest</option>
+                                    <option value="daily">Daily digest</option>
+                                    <option value="weekly">Weekly digest</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveSettings">Save Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Stage Modal -->
+    <div class="modal fade" id="addStageModal" tabindex="-1" aria-labelledby="addStageModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addStageModalLabel">Add New Stage</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addStageForm">
+                        <div class="mb-3">
+                            <label for="stageName" class="form-label">Stage Name *</label>
+                            <input type="text" class="form-control" id="stageName" required placeholder="e.g., Proposal, Negotiation, Closed">
+                        </div>
+                        <div class="mb-3">
+                            <label for="stageDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="stageDescription" rows="2" placeholder="Optional description of this stage"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="stageColor" class="form-label">Color</label>
+                            <input type="color" class="form-control form-control-color" id="stageColor" value="#6c757d" title="Choose stage color">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveStageBtn">Add Stage</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalLabel">Filter Deals</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="filterForm">
+                        <div class="mb-3">
+                            <label for="filterPriority" class="form-label">Priority</label>
+                            <select class="form-select" id="filterPriority">
+                                <option value="">All Priorities</option>
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="filterValueMin" class="form-label">Minimum Value (€)</label>
+                            <input type="number" class="form-control" id="filterValueMin" placeholder="0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="filterValueMax" class="form-label">Maximum Value (€)</label>
+                            <input type="number" class="form-control" id="filterValueMax" placeholder="1000000">
+                        </div>
+                        <div class="mb-3">
+                            <label for="filterProbabilityMin" class="form-label">Minimum Probability (%)</label>
+                            <input type="range" class="form-range" id="filterProbabilityMin" min="0" max="100" value="0">
+                            <div class="d-flex justify-content-between">
+                                <small>0%</small>
+                                <small id="probabilityMinValue">0%</small>
+                                <small>100%</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="filterCompany" class="form-label">Company</label>
+                            <select class="form-select" id="filterCompany">
+                                <option value="">All Companies</option>
+                                <option value="BalticHydrogenGroup">BalticHydrogenGroup</option>
+                                <option value="MPIndustries">MPIndustries</option>
+                                <option value="IberianHydrogenGroup">IberianHydrogenGroup</option>
+                                <option value="TechCorp Solutions">TechCorp Solutions</option>
+                                <option value="Global Innovations">Global Innovations</option>
+                                <option value="Digital Dynamics">Digital Dynamics</option>
+                                <option value="Future Systems">Future Systems</option>
+                                <option value="Cloud Enterprises">Cloud Enterprises</option>
+                                <option value="DataWorks Inc">DataWorks Inc</option>
+                                <option value="Smart Solutions">Smart Solutions</option>
+                                <option value="NextGen Tech">NextGen Tech</option>
+                                <option value="Innovate Partners">Innovate Partners</option>
+                                <option value="Visionary Labs">Visionary Labs</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-outline-secondary" id="resetFilterBtn">Reset</button>
+                    <button type="button" class="btn btn-primary" id="applyFilterBtn">Apply Filter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <!-- Microsoft Teams SDK -->
+    <script src="https://statics.teams.cdn.office.net/sdk/v1.11.0/js/MicrosoftTeams.min.js" crossorigin="anonymous"></script>
+    <!-- SharePoint Configuration -->
+    <script src="sharepoint-config.js"></script>
+    <script src="app.js"></script>
